@@ -145,8 +145,9 @@
         /* Nút Download */
         .download-btn {
             display: inline-block;
-            margin-top: 20px;
-            margin-bottom: 25px;
+            margin: 0;
+            flex: 1;
+            max-width: 200px;
             padding: 12px 35px;
             font-size: 16px;
             font-weight: bold;
@@ -164,7 +165,43 @@
             box-shadow: 0 0 15px rgba(255, 121, 198, 0.7);
         }
 
-        /* Vùng chứa khung bình luận Disqus */
+        /* CSS bổ sung cho nút tương tác */
+        .like-btn, .thumb-btn {
+            flex: 1;
+            max-width: 120px;
+            background: #16161d;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .like-btn {
+            border: 2px solid #ff7597;
+            color: #ff7597;
+        }
+
+        .like-btn.active {
+            background: #ff7597 !important;
+            color: #ffffff !important;
+        }
+
+        .thumb-btn {
+            border: 2px solid #bd93f9;
+            color: #bd93f9;
+        }
+
+        .thumb-btn.active {
+            background: #bd93f9 !important;
+            color: #ffffff !important;
+        }
+
+        .like-btn:disabled, .thumb-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        /* Vùng chứa khung bình luận */
         .comment-section {
             margin-top: 20px;
             padding-top: 20px;
@@ -272,6 +309,16 @@
                 // Tự động kiểm tra thời gian cập nhật, nếu không có sẽ ẩn đi cho đẹp
                 const timeText = vtuber.lastUpdate ? `Cập nhật mới nhất: ${vtuber.lastUpdate}` : '';
 
+                // Kiểm tra trạng thái lưu trữ trên máy người dùng
+                const savedHeart = localStorage.getItem(`heart_${vtuber.id}`) === 'true';
+                const savedThumb = localStorage.getItem(`thumb_${vtuber.id}`) === 'true';
+
+                // Lấy số lượng gốc từ data.js (nếu không có thì mặc định là 0), và cộng thêm 1 nếu máy này đã bấm tương tác trước đó
+                const baseHearts = vtuber.hearts || 0;
+                const baseLikes = vtuber.likes || 0;
+                const currentHearts = baseHearts + (savedHeart ? 1 : 0);
+                const currentThumbs = baseLikes + (savedThumb ? 1 : 0);
+
                 wrapper.innerHTML = `
                     <div class="card-header">
                         <div class="vtuber-title">${vtuber.name}</div>
@@ -280,14 +327,18 @@
                     <img src="${vtuber.image}" class="card-img" alt="${vtuber.name}" onclick="openImage('${vtuber.image}')" style="cursor: zoom-in;">
                     
                     <div class="interaction-bar" style="display: flex; gap: 15px; justify-content: center; margin: 20px 0;">
-                        <a href="${vtuber.image}" download="${vtuber.name}_Card.png" class="download-btn" style="margin: 0; flex: 1; max-width: 200px;">
+                        <a href="${vtuber.image}" download="${vtuber.name}_Card.png" class="download-btn">
                             📥 Tải Ảnh
                         </a>
-                        <button class="like-btn" onclick="toggleLike(this)" style="flex: 1; max-width: 120px; background: #16161d; border: 2px solid #ff7597; color: #ff7597; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.2s;">
-                            ❤️ <span class="count">0</span>
+                        <button class="like-btn ${savedHeart ? 'active' : ''}" 
+                                onclick="handleInteract('${vtuber.id}', 'heart', this)" 
+                                ${savedHeart ? 'disabled' : ''}>
+                            ❤️ <span class="count">${currentHearts}</span>
                         </button>
-                        <button class="thumb-btn" onclick="toggleThumb(this)" style="flex: 1; max-width: 120px; background: #16161d; border: 2px solid #bd93f9; color: #bd93f9; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.2s;">
-                            👍 <span class="count">0</span>
+                        <button class="thumb-btn ${savedThumb ? 'active' : ''}" 
+                                onclick="handleInteract('${vtuber.id}', 'thumb', this)" 
+                                ${savedThumb ? 'disabled' : ''}>
+                            👍 <span class="count">${currentThumbs}</span>
                         </button>
                     </div>
                     
@@ -297,7 +348,7 @@
                                 💬 Xem bình luận nào !
                             </summary>
                             <div class="disqus-placeholder" data-id="${vtuber.id}" data-title="${vtuber.name}" style="margin-top: 15px; cursor: default;">
-                                <p style="color: #888; font-size: 14px; font-style: italic;">🔒Chức năng bình luận đã bị khóa bởi quản trị viên.</p>
+                                <p style="color: #888; font-size: 14px; font-style: italic;">🔒 Tính năng bình luận đã được chủ sở hữu khóa.</p>
                             </div>
                         </details>
                     </div>
@@ -306,36 +357,24 @@
             });
         }
 
-        // Hàm xử lý khi bấm nút Tim (❤️)
-        function toggleLike(btn) {
-            const countSpan = btn.querySelector('.count');
-            let currentCount = parseInt(countSpan.innerText);
+        // Hàm xử lý tương tác chuẩn chỉnh (Lưu máy cá nhân, khóa nút)
+        function handleInteract(id, type, btn) {
+            const key = `${type}_${id}`;
             
-            if (btn.style.background === 'rgb(255, 117, 151)' || btn.style.background === '#ff7597') {
-                btn.style.background = '#16161d';
-                btn.style.color = '#ff7597';
-                countSpan.innerText = currentCount - 1;
-            } else {
-                btn.style.background = '#ff7597';
-                btn.style.color = '#ffffff';
-                countSpan.innerText = currentCount + 1;
-            }
-        }
+            // Chống spam: Nếu đã bấm trước đó rồi thì không xử lý gì thêm
+            if (localStorage.getItem(key) === 'true') return;
 
-        // Hàm xử lý khi bấm nút Like (👍)
-        function toggleThumb(btn) {
+            // Đánh dấu đã bấm vào bộ nhớ trình duyệt của máy hiện tại
+            localStorage.setItem(key, 'true');
+
+            // Tăng số đếm hiển thị trực tiếp trên giao diện
             const countSpan = btn.querySelector('.count');
             let currentCount = parseInt(countSpan.innerText);
-            
-            if (btn.style.background === 'rgb(189, 147, 249)' || btn.style.background === '#bd93f9') {
-                btn.style.background = '#16161d';
-                btn.style.color = '#bd93f9';
-                countSpan.innerText = currentCount - 1;
-            } else {
-                btn.style.background = '#bd93f9';
-                btn.style.color = '#ffffff';
-                countSpan.innerText = currentCount + 1;
-            }
+            countSpan.innerText = currentCount + 1;
+
+            // Kích hoạt màu sáng lên và vô hiệu hóa nút bấm
+            btn.classList.add('active');
+            btn.disabled = true;
         }
 
         // Chạy lần đầu
@@ -351,7 +390,7 @@
         let isDragging = false;
         let startX, startY, translateX = 0, translateY = 0;
 
-        // 1. Hàm mở phóng to ảnh
+        // Hàm mở phóng to ảnh
         function openImage(imgSrc) {
             const overlay = document.getElementById('imageOverlay');
             const overlayImg = document.getElementById('overlayImg');
