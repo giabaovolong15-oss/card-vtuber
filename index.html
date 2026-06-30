@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Vtuber Reality - Tìm Kiếm & Tải Thẻ</title>
+    <style>
+        /* Toàn bộ trang web - Phong cách Dark Mode */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0f0f12;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #ff79c6;
+            text-shadow: 0 0 10px rgba(255, 121, 198, 0.5);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        /* Dòng lịch cập nhật đưa lên đầu trang */
+        .update-schedule {
+            color: #bd93f9;
+            font-size: 13px;
+            margin-bottom: 25px;
+            font-style: italic;
+        }
+
+        /* Thanh tìm kiếm - Đã thêm icon kính lúp */
+        .search-container {
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-container::before {
+            content: "";
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            background-color: #ff79c6;
+            -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>") no-repeat center / contain;
+            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>") no-repeat center / contain;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 14px 25px 14px 50px;
+            font-size: 16px;
+            border: 2px solid #ff79c6;
+            border-radius: 25px;
+            background-color: #1e1e24;
+            color: white;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 0 15px rgba(255, 121, 198, 0.6);
+        }
+        
+        .search-container:focus-within::before {
+            box-shadow: 0 0 10px rgba(255, 121, 198, 0.8);
+            background-color: #ffffff;
+        }
+
+        /* Khu vực hiển thị danh sách Card */
+        .card-gallery {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 850px; 
+            flex-grow: 1;
+        }
+
+        /* Khung bọc từng cụm Card, Nút bấm và Bình luận */
+        .card-wrapper {
+            width: 100%;
+            margin-bottom: 60px;
+            background-color: #1e1e2e;
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid #ff79c6;
+            box-shadow: 0 0 20px rgba(255, 121, 198, 0.2), inset 0 0 15px rgba(255, 121, 198, 0.1);
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Khung tiêu đề chứa cả tên đối diện thời gian */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-left: 5px solid #ff79c6;
+            padding-left: 10px;
+        }
+
+        /* Tên Vtuber bên trái */
+        .vtuber-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #bd93f9;
+            margin: 0;
+        }
+
+        /* Dòng chữ cập nhật nhỏ đối diện bên phải */
+        .card-timestamp {
+            font-size: 12px;
+            color: #9e9ebb;
+            font-style: italic;
+        }
+
+        /* Ảnh hiển thị trên web */
+        .card-img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Nút Download */
+        .download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            margin-bottom: 25px;
+            padding: 12px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #ff79c6, #bd93f9);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 121, 198, 0.7);
+        }
+
+        /* Vùng chứa khung bình luận Disqus */
+        .comment-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ff79c640;
+            text-align: left;
+        }
+
+        /* KHU VỰC CHÂN TRANG (FOOTER) */
+        .footer {
+            margin-top: 40px;
+            padding: 20px 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            line-height: 1.6;
+            border-top: 1px solid #ff79c650;
+            width: 100%;
+            max-width: 850px;
+        }
+        
+        .footer p {
+            margin: 4px 0;
+        }
+
+        /* Khung nền đen khi phóng to ảnh */
+        .image-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        /* Ảnh khi được phóng to */
+        .image-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 121, 198, 0.5);
+            animation: zoomIn 0.25s ease-in-out;
+            cursor: grab;
+            transition: transform 0.05s ease-out;
+        }
+
+        /* Nút đóng (X) */
+        .close-overlay {
+            position: absolute;
+            top: 20px; right: 30px;
+            color: #fff; font-size: 40px; font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-overlay:hover { color: #ff79c6; }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.7); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ Reality Vtuber Card Search ✨</h1>
+    <div class="subtitle">Tìm kiếm, tải thẻ card và để lại lời nhắn cho Idol của bạn</div>
+    
+    <div class="update-schedule">📅 <strong>Lịch cập nhật:</strong> Các hình ảnh thẻ card và chỉ số sẽ được cập nhật định kỳ 1 tuần / 1 lần.</div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="Nhập name/nickname của Vtuber để tìm kiếm.....">
+    </div>
+
+    <div class="card-gallery" id="cardGallery"></div>
+
+    <footer class="footer">
+        <p>⚠️ <strong>Miễn trừ trách nhiệm:</strong> Đây là trang web do Fanmade thực hiện vì mục đích cộng đồng, hoàn toàn không liên quan, không có sự hợp tác hay đại diện cho ứng dụng REALITY hoặc công ty chủ quản. Chúng tôi từ chối mọi trách nhiệm pháp lý phát sinh từ việc sử dụng hình ảnh trên trang web này.</p>
+    </footer>
+
+    <div id="imageOverlay" class="image-overlay" onclick="closeImage()">
+        <span class="close-overlay">&times;</span>
+        <img id="overlayImg" src="" alt="Zoomed Card" onclick="event.stopPropagation()">
+    </div>
+
+    <script src="data.js"></script>
+
+    <script>
+        const gallery = document.getElementById('cardGallery');
+        const searchInput = document.getElementById('searchInput');
+
+        // Hàm vẽ giao diện
+        function renderCards(filterText = "") {
+            gallery.innerHTML = ""; 
+
+            const filteredList = vtuberList.filter(vtuber => 
+                vtuber.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                (vtuber.tags && vtuber.tags.some(tag => tag.toLowerCase().includes(filterText.toLowerCase())))
+            );
+
+            filteredList.forEach(vtuber => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'card-wrapper';
+
+                // Tự động kiểm tra thời gian cập nhật, nếu không có sẽ ẩn đi cho đẹp
+                const timeText = vtuber.lastUpdate ? `Cập nhật mới nhất: ${vtuber.lastUpdate}` : '';
+
+                wrapper.innerHTML = `
+                    <div class="card-header">
+                        <div class="vtuber-title">${vtuber.name}</div>
+                        <div class="card-timestamp">${timeText}</div>
+                    </div>
+                    <img src="${vtuber.image}" class="card-img" alt="${vtuber.name}" onclick="openImage('${vtuber.image}')" style="cursor: zoom-in;">
+                    
+                    <div class="interaction-bar" style="display: flex; gap: 15px; justify-content: center; margin: 20px 0;">
+                        <a href="${vtuber.image}" download="${vtuber.name}_Card.png" class="download-btn" style="margin: 0; flex: 1; max-width: 200px;">
+                            📥 Tải Ảnh
+                        </a>
+                        <button class="like-btn" onclick="toggleLike(this)" style="flex: 1; max-width: 120px; background: #16161d; border: 2px solid #ff7597; color: #ff7597; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.2s;">
+                            ❤️ <span class="count">0</span>
+                        </button>
+                        <button class="thumb-btn" onclick="toggleThumb(this)" style="flex: 1; max-width: 120px; background: #16161d; border: 2px solid #bd93f9; color: #bd93f9; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.2s;">
+                            👍 <span class="count">0</span>
+                        </button>
+                    </div>
+                    
+                    <div class="comment-section">
+                        <details style="background: #16161d; padding: 12px 15px; border-radius: 10px; cursor: pointer; border: 1px solid #444;">
+                            <summary style="color: #ff79c6; font-weight: bold; outline: none;">
+                                💬 Xem bình luận nào !
+                            </summary>
+                            <div class="disqus-placeholder" data-id="${vtuber.id}" data-title="${vtuber.name}" style="margin-top: 15px; cursor: default;">
+                                <p style="color: #888; font-size: 14px; font-style: italic;">Tính năng bình luận sẽ kích hoạt khi lên mạng nhé!</p>
+                            </div>
+                        </details>
+                    </div>
+                `;
+                gallery.appendChild(wrapper);
+            });
+        }
+
+        // Hàm xử lý khi bấm nút Tim (❤️)
+        function toggleLike(btn) {
+            const countSpan = btn.querySelector('.count');
+            let currentCount = parseInt(countSpan.innerText);
+            
+            if (btn.style.background === 'rgb(255, 117, 151)' || btn.style.background === '#ff7597') {
+                btn.style.background = '#16161d';
+                btn.style.color = '#ff7597';
+                countSpan.innerText = currentCount - 1;
+            } else {
+                btn.style.background = '#ff7597';
+                btn.style.color = '#ffffff';
+                countSpan.innerText = currentCount + 1;
+            }
+        }
+
+        // Hàm xử lý khi bấm nút Like (👍)
+        function toggleThumb(btn) {
+            const countSpan = btn.querySelector('.count');
+            let currentCount = parseInt(countSpan.innerText);
+            
+            if (btn.style.background === 'rgb(189, 147, 249)' || btn.style.background === '#bd93f9') {
+                btn.style.background = '#16161d';
+                btn.style.color = '#bd93f9';
+                countSpan.innerText = currentCount - 1;
+            } else {
+                btn.style.background = '#bd93f9';
+                btn.style.color = '#ffffff';
+                countSpan.innerText = currentCount + 1;
+            }
+        }
+
+        // Chạy lần đầu
+        renderCards();
+
+        // Xử lý tìm kiếm
+        searchInput.addEventListener('input', (e) => {
+            renderCards(e.target.value);
+        });
+
+        // Các biến điều khiển tính năng zoom và kéo ảnh
+        let currentScale = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        // 1. Hàm mở phóng to ảnh
+        function openImage(imgSrc) {
+            const overlay = document.getElementById('imageOverlay');
+            const overlayImg = document.getElementById('overlayImg');
+            
+            currentScale = 1;
+            translateX = 0;
+            translateY = 0;
+            overlayImg.style.transform = `translate(0px, 0px) scale(1)`;
+            
+            overlayImg.src = imgSrc;
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            overlay.onwheel = function(e) {
+                e.preventDefault();
+                const zoomSpeed = 0.1;
+                if (e.deltaY < 0) {
+                    currentScale += zoomSpeed;
+                } else {
+                    currentScale -= zoomSpeed;
+                }
+                currentScale = Math.max(1, Math.min(currentScale, 4));
+                if (currentScale === 1) { translateX = 0; translateY = 0; }
+                overlayImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+            };
+
+            overlayImg.onmousedown = function(e) {
+                if (currentScale === 1) return;
+                isDragging = true;
+                overlayImg.style.cursor = 'grabbing';
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+            };
+
+            window.onmousemove = function(e) {
+                if (!isDragging) return;
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                overlayImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+            };
+
+            window.onmouseup = function() {
+                isDragging = false;
+                overlayImg.style.cursor = 'grab';
+            };
+        }
+
+        function closeImage() {
+            const overlay = document.getElementById('imageOverlay');
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            overlay.onwheel = null;
+            window.onmousemove = null;
+            window.onmouseup = null;
+        }
+    </script>
+</body>
+</html>
